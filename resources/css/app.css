@@ -1,0 +1,13 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+
+@import "./theme.css";
+@import "./components.css";
+@import "./animations.css";
+
+@import "./landing.css";
+@import "./login.css";
+@import "./dashboard.css";
+@import "./news.css";
+
