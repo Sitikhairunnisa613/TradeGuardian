@@ -57,7 +57,7 @@ jobs:
       run: php artisan test
 
   deploy:
-    name: Deploy to Server (CD)
+    name: Deploy to Server (CD - FTP)
     runs-on: ubuntu-latest
     needs: laravel-tests
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
@@ -66,35 +66,41 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Deploy Files via SSH/Rsync
-      uses: easingthemes/ssh-deploy@v5.1.0
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
       with:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY || secrets.SSH_PRIVATE_KEY }}
-        ARGS: "-rlgoDzvO --delete"
-        SOURCE: "./"
-        REMOTE_HOST: ${{ secrets.SSH_HOST }}
-        REMOTE_USER: ${{ secrets.SSH_USERNAME }}
-        REMOTE_PORT: ${{ secrets.SSH_PORT || '22' }}
-        TARGET: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH }}
-        EXCLUDE: "/node_modules/, /vendor/, /tests/, /.git/, /.github/"
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, iconv, sqlite, pdo_sqlite
+        coverage: none
 
-    - name: Run Post-Deployment Optimizations
-      uses: appleboy/ssh-action@v1.0.3
+    - name: Install Production Dependencies
+      run: |
+        composer install --no-dev --optimize-autoloader --no-interaction --no-ansi
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_KEY || secrets.SSH_PRIVATE_KEY }}
-        port: ${{ secrets.SSH_PORT || '22' }}
-        script: |
-          cd ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH }}
-          # Install dependencies without dev-packages
-          composer install --no-dev --optimize-autoloader --no-interaction --no-ansi
-          # Run database migrations
-          php artisan migrate --force
-          # Cache config, routes, and views
-          php artisan config:cache
-          # Route caching
-          php artisan route:cache
-          php artisan view:cache
-          # Restart queue workers if applicable
-          php artisan queue:restart
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Build Production Assets
+      run: |
+        npm ci
+        npm run build
+
+    - name: Deploy Files via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.0
+      with:
+        server: ${{ secrets.FTP_SERVER || secrets.FTP_HOST }}
+        username: ${{ secrets.FTP_USERNAME || secrets.FTP_USER }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: ${{ secrets.FTP_PORT || 21 }}
+        server-dir: ${{ secrets.FTP_TARGET_DIR || secrets.DEPLOY_PATH || vars.DEPLOY_PATH || '/' }}
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/phpunit.xml
+          **/.env
+          **/README.md
