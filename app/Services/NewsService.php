@@ -8,10 +8,9 @@ class NewsService
 {
     public function getNews(string $countryCode): array
     {
-        $apiKey = env('NEWSDATA_API_KEY');
+        $apiKey = env('GNEWS_API_KEY');
 
         $countryMap = [
-
             'id' => 'Indonesia',
             'jp' => 'Japan',
             'cn' => 'China',
@@ -19,88 +18,49 @@ class NewsService
             'us' => 'United States',
             'au' => 'Australia',
             'br' => 'Brazil',
-
         ];
 
-        $countryName = $countryMap[strtolower($countryCode)] ?? '';
+        $countryName = $countryMap[strtolower($countryCode)] ?? 'World';
 
-        $response = Http::connectTimeout(10)
-            ->timeout(30)
-            ->retry(3,1000)
-            ->get(
-                'https://newsdata.io/api/1/latest',
+        try {
+
+            $response = Http::timeout(20)->get(
+                'https://gnews.io/api/v4/search',
                 [
-
-                    'apikey'=>$apiKey,
-
-                    'country'=>strtolower($countryCode),
-
-                    'language'=>'en',
-
-                    'category'=>'business',
-
-                    'q'=>$countryName,
-
-                    'size'=>5
-
+                    'q'       => $countryName,
+                    'lang'    => 'en',
+                    'max'     => 5,
+                    'apikey'  => $apiKey,
                 ]
             );
 
-        if(!$response->successful()){
+            if (!$response->successful()) {
+                return [];
+            }
 
-            throw new \Exception('News API failed');
+            $json = $response->json();
 
-        }
+            if (!isset($json['articles'])) {
+                return [];
+            }
 
-        $json = $response->json();
+            return collect($json['articles'])
+                ->map(function ($item) {
 
-        if(
+                    return [
+                        'title'  => $item['title'] ?? 'No Title',
+                        'url'    => $item['url'] ?? '#',
+                        'source' => $item['source']['name'] ?? 'Unknown',
+                        'date'   => $item['publishedAt'] ?? '',
+                    ];
 
-            isset($json['status']) &&
+                })
+                ->toArray();
 
-            $json['status']=='error'
-
-        ){
-
-            throw new \Exception(
-
-                $json['results']['message'] ??
-
-                'News API Error'
-
-            );
-
-        }
-
-        if(
-
-            !isset($json['results'])
-
-        ){
+        } catch (\Throwable $e) {
 
             return [];
 
         }
-
-        return collect($json['results'])
-
-            ->map(function($item){
-
-                return [
-
-                    'title'=>$item['title'] ?? 'No Title',
-
-                    'url'=>$item['link'] ?? '#',
-
-                    'source'=>$item['source_name'] ?? 'Unknown',
-
-                    'date'=>$item['pubDate'] ?? ''
-
-                ];
-
-            })
-
-            ->toArray();
-
     }
 }

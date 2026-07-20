@@ -7,10 +7,39 @@ import "../css/app.css";
 
 import Chart from "chart.js/auto";
 import Globe from "globe.gl";
+import jsPDF from "jspdf";
 import * as THREE from "three";
 
 import { countries } from "./countryData";
 const countryCache = {};
+
+// ======================================================
+// COUNTRY COMPARISON
+// ======================================================
+
+function loadCompareCountries(){
+
+    const select = document.getElementById("compareCountry");
+
+    if(!select) return;
+
+    select.innerHTML = `
+        <option value="">
+            Select Country...
+        </option>
+    `;
+
+    countries.forEach(country=>{
+
+        select.innerHTML += `
+            <option value="${country.name}">
+                ${country.name}
+            </option>
+        `;
+
+    });
+
+}
 
 async function getCountryInfo(countryName) {
 
@@ -62,10 +91,6 @@ async function getNews(country){
 
     if(!response.ok){
 
-        console.log("NEWS STATUS:", response.status);
-
-        console.log(await response.text());
-
         throw new Error("Failed to load news");
 
     }
@@ -84,7 +109,6 @@ if (!dashboardGlobe) {
     console.log("TradeGuardian Dashboard not found.");
 } else {
 
-console.log("TradeGuardian Dashboard Loaded");
 
 // ======================================================
 // GLOBAL VARIABLES
@@ -189,8 +213,6 @@ globe
 .atmosphereColor("#38bdf8")
 
 .atmosphereAltitude(0.22);
-
-console.log("Globe Created");
 
 // ======================================================
 // LIGHTING
@@ -618,8 +640,6 @@ function animateSun() {
 
 animateSun();
 
-console.log("Airplane Engine Loaded");
-
 // ======================================================
 // UPDATE CHART
 // ======================================================
@@ -841,29 +861,25 @@ function updateTradeProgress(country) {
 // RISK
 // ======================================================
 
-function updateRisk(country) {
+function updateRisk(level){
 
-    const risk = document.getElementById("riskLevel");
+    const risk=document.getElementById("riskLevel");
 
-    if (!risk) return;
+    if(!risk) return;
 
-    risk.innerText = country.risk;
+    risk.innerText=level;
 
-    risk.className = "risk";
+    risk.className="";
 
-    if (country.risk === "Low") {
+    if(level==="LOW"){
 
         risk.classList.add("low");
 
-    }
-
-    if (country.risk === "Medium") {
+    }else if(level==="MEDIUM"){
 
         risk.classList.add("medium");
 
-    }
-
-    if (country.risk === "High") {
+    }else{
 
         risk.classList.add("high");
 
@@ -875,15 +891,168 @@ function updateRisk(country) {
 // WEATHER
 // ======================================================
 
-function updateWeather(weather) {
+function calculateRisk(economy, weather, exchange, news){
 
-    const card = document.getElementById("weatherCard");
+    let weatherScore = 100;
 
-    if (!card) return;
+    if(weather.weather.includes("Rain"))
+        weatherScore = 70;
 
-    card.innerHTML = `
+    if(weather.weather.includes("Storm"))
+        weatherScore = 40;
+
+
+    let inflationScore = 100;
+
+    const inflation = Number(economy.inflation);
+
+    if(inflation >= 8)
+        inflationScore = 30;
+    else if(inflation >= 5)
+        inflationScore = 60;
+
+
+    let newsScore = 100;
+
+    if(news.length >= 8)
+        newsScore = 40;
+    else if(news.length >= 5)
+        newsScore = 65;
+    else if(news.length >= 3)
+        newsScore = 80;
+
+    const safety =
+
+    weatherScore * 0.30 +
+
+    inflationScore * 0.30 +
+
+    newsScore * 0.40;
+
+    return Math.round(100 - safety);
+
+}
+
+function updateSupplyChainRisk(country,economy,weather,exchange,news){
+
+    //------------------------------------------------
+    // WEATHER (30)
+    //------------------------------------------------
+
+    let weatherScore = 100;
+
+    if(weather.weather.includes("Rain"))
+        weatherScore = 70;
+
+    if(weather.weather.includes("Storm"))
+        weatherScore = 40;
+
+    //------------------------------------------------
+    // INFLATION (30)
+    //------------------------------------------------
+
+    let inflationScore = 100;
+
+    const inflation = Number(economy.inflation);
+
+    if(inflation >= 8)
+        inflationScore = 30;
+    else if(inflation >=5)
+        inflationScore = 60;
+
+    //------------------------------------------------
+    // NEWS (40)
+    //------------------------------------------------
+
+    let newsScore = 100;
+
+    if(news.length>=8)
+        newsScore = 40;
+    else if(news.length>=5)
+        newsScore = 65;
+    else if(news.length>=3)
+        newsScore = 80;
+
+    //------------------------------------------------
+    // FINAL SCORE
+    //------------------------------------------------
+
+    const risk = calculateRisk(
+    economy,
+    weather,
+    exchange,
+    news
+);
+
+document.getElementById("riskScore").innerText = risk;
+
+    document.getElementById("weatherRisk").innerText =
+    Math.round((100-weatherScore)*0.30);
+
+    document.getElementById("inflationRisk").innerText =
+        Math.round((100-inflationScore)*0.30);
+
+    document.getElementById("newsRisk").innerText =
+        Math.round((100-newsScore)*0.40);
+
+    const badge = document.getElementById("riskBadge");
+    const circle = document.querySelector(".tg-risk-circle");
+
+    let level;
+
+    if(risk >= 70){
+
+        level="HIGH";
+
+        badge.innerText="HIGH RISK";
+        badge.style.background="#ef4444";
+
+        circle.style.setProperty("--riskColor","#ef4444");
+
+    }
+    else if(risk >= 40){
+
+        level="MEDIUM";
+
+        badge.innerText="MEDIUM RISK";
+        badge.style.background="#f59e0b";
+
+        circle.style.setProperty("--riskColor","#f59e0b");
+
+    }
+    else{
+
+        level="LOW";
+
+        badge.innerText="LOW RISK";
+        badge.style.background="#22c55e";
+
+        circle.style.setProperty("--riskColor","#22c55e");
+
+    }
+
+    circle.style.setProperty("--progress",risk);
+
+    updateRisk(level);
+
+}
+
+// ======================================================
+// WEATHER CARD
+// ======================================================
+
+function updateWeather(weather){
+
+    const card=document.getElementById("weatherCard");
+
+    if(!card) return;
+
+    card.innerHTML=`
+
         <div class="weather-icon">
+
             ${weatherIcon(weather.weather)}
+
         </div>
 
         <h2>${weather.temperature}°C</h2>
@@ -893,42 +1062,56 @@ function updateWeather(weather) {
         <div class="weather-grid">
 
             <div class="weather-box">
+
                 <span>Humidity</span>
+
                 <h4>${weather.humidity}%</h4>
+
             </div>
 
             <div class="weather-box">
+
                 <span>Wind</span>
+
                 <h4>${weather.wind} km/h</h4>
+
             </div>
 
         </div>
+
     `;
+
 }
+
+// ======================================================
+// WEATHER ICON
+// ======================================================
 
 function weatherIcon(weather){
 
     switch(weather){
 
         case "Clear Sky":
-            return "☀";
+            return "☀️";
 
         case "Partly Cloudy":
             return "⛅";
 
+        case "Cloudy":
         case "Overcast":
-            return "☁";
+            return "☁️";
 
         case "Rain":
         case "Moderate Rain":
+        case "Light Rain":
         case "Slight Rain":
-            return "🌧";
+            return "🌧️";
 
         case "Thunderstorm":
-            return "⛈";
+            return "⛈️";
 
         default:
-            return "🌤";
+            return "🌤️";
 
     }
 
@@ -1023,117 +1206,110 @@ function formatNewsDate(date) {
 // AI RECOMMENDATION
 // ======================================================
 
-function updateAI(country, economy, weather, exchange) {
+function updateAI(country, economy, weather, exchange){
 
-    const ai = document.getElementById("recommendation");
+    const ai=document.getElementById("recommendation");
 
-    if (!ai) return;
+    if(!ai) return;
 
-    const recommendations = [];
+    const trade=parseInt(country.tradeScore);
+    const inflation=Number(economy.inflation);
 
-    // Trade Score
-    const tradeScore = parseInt(country.tradeScore);
+    let recommendation="";
+    let color="#22c55e";
+    let icon="✅";
 
-    if (tradeScore >= 90) {
+    if(trade>=90){
 
-        recommendations.push({
-            icon: "📈",
-            color: "#22c55e",
-            text: "Trade confidence is very high. This market is favorable for export expansion."
-        });
+        recommendation=
+        "This country has an excellent trade score. Export opportunities are very promising and logistics conditions are generally stable.";
 
-    } else if (tradeScore >= 75) {
+    }
+    else if(trade>=75){
 
-        recommendations.push({
-            icon: "⚖️",
-            color: "#f59e0b",
-            text: "Trade conditions remain stable. Expand carefully while monitoring market trends."
-        });
+        recommendation=
+        "Trade conditions are stable. Expansion is recommended while monitoring market developments.";
 
-    } else {
+        color="#f59e0b";
+        icon="⚠️";
 
-        recommendations.push({
-            icon: "⚠️",
-            color: "#ef4444",
-            text: "Trade confidence is relatively low. Consider evaluating risks before exporting."
-        });
+    }
+    else{
+
+        recommendation=
+        "Trade confidence is relatively low. Consider evaluating operational risks before entering this market.";
+
+        color="#ef4444";
+        icon="❌";
 
     }
 
-    // Inflation
-    if (economy.inflation !== "-" && Number(economy.inflation) > 6) {
+    let inflationText;
 
-        recommendations.push({
-            icon: "💹",
-            color: "#f97316",
-            text: "High inflation may reduce purchasing power in this market."
-        });
+    if(inflation>=6){
 
-    } else {
+        inflationText=
+        "Inflation is relatively high, which may reduce purchasing power.";
 
-        recommendations.push({
-            icon: "💰",
-            color: "#22c55e",
-            text: "Inflation remains under control and supports stable business conditions."
-        });
+    }else{
+
+        inflationText=
+        "Inflation remains under control and supports business stability.";
 
     }
 
-    // Weather
-    if (
+    let weatherText;
+
+    if(
         weather.weather.includes("Rain") ||
         weather.weather.includes("Storm")
-    ) {
+    ){
 
-        recommendations.push({
-            icon: "🌧️",
-            color: "#3b82f6",
-            text: "Weather conditions may affect shipping schedules. Monitor logistics closely."
-        });
+        weatherText=
+        "Current weather may affect shipping schedules.";
 
-    } else {
+    }else{
 
-        recommendations.push({
-            icon: "☀️",
-            color: "#eab308",
-            text: "Weather conditions are favorable for transportation and shipping."
-        });
+        weatherText=
+        "Weather conditions support smooth logistics operations.";
 
     }
 
-    // Exchange
-    recommendations.push({
+    ai.innerHTML=`
 
-        icon: "💱",
+        <div class="ai-summary-card">
 
-        color: "#8b5cf6",
+            <h3>${icon} AI Trade Recommendation</h3>
 
-        text:
-            `Current exchange base is ${exchange.base}. Monitor currency fluctuations before large transactions.`
+            <p>${recommendation}</p>
 
-    });
+            <hr>
 
-    ai.innerHTML = recommendations.map(item => `
+            <p>
+                📈 <b>Trade Score :</b>
+                ${country.tradeScore}
+            </p>
 
-        <div class="ai-item">
+            <p>
+                💹 <b>Inflation :</b>
+                ${inflation}%<br>
+                ${inflationText}
+            </p>
 
-            <div
-                class="ai-icon"
-                style="background:${item.color}">
+            <p>
+                🌦 <b>Weather :</b>
+                ${weather.weather}<br>
+                ${weatherText}
+            </p>
 
-                ${item.icon}
-
-            </div>
-
-            <div class="ai-text">
-
-                ${item.text}
-
-            </div>
+            <p>
+                💱 <b>Exchange :</b>
+                1 ${exchange.base} = ${exchange.rate} ${exchange.target}
+            </p>
 
         </div>
 
-    `).join("");
+    `;
 
 }
 
@@ -1199,6 +1375,260 @@ function formatGDP(value){
 
 }
 
+// ======================================
+// FAVORITE MONITORING
+// ======================================
+
+let currentCountry = null;
+
+function getFavorites(){
+
+    return JSON.parse(
+        localStorage.getItem("tg-favorites") || "[]"
+    );
+
+}
+
+function saveFavorites(data){
+
+    localStorage.setItem(
+        "tg-favorites",
+        JSON.stringify(data)
+    );
+
+}
+
+function getRecent(){
+
+    return JSON.parse(
+        localStorage.getItem("tg-recent") || "[]"
+    );
+
+}
+
+function saveRecent(data){
+
+    localStorage.setItem(
+        "tg-recent",
+        JSON.stringify(data)
+    );
+
+}
+
+function renderFavorites(){
+
+    const list=document.getElementById("favoriteList");
+
+    if(!list) return;
+
+    const favorites=getFavorites();
+
+    const badge = document.getElementById("favoriteCount");
+
+    if (badge) {
+        badge.innerText = favorites.length;
+    }
+
+    if(favorites.length===0){
+
+    list.innerHTML=`
+        <div class="favorite-empty">
+
+            ⭐
+
+            <p>No favorite countries</p>
+
+            <small>
+                Click the star next to a country to save it.
+            </small>
+
+        </div>
+    `;
+
+    return;
+
+}
+
+    list.innerHTML="";
+
+    favorites.forEach(name=>{
+
+        const item=document.createElement("div");
+
+        item.className="favorite-item";
+
+        item.innerHTML = `
+            <span>⭐ ${name}</span>
+            <button class="favorite-remove">✕</button>
+        `;
+
+        item.querySelector("span").onclick = () => {
+
+            const country = countries.find(c => c.name === name);
+
+            if(country){
+                showCountry(country);
+            }
+
+        };
+
+        item.querySelector(".favorite-remove").onclick = (e) => {
+
+            e.stopPropagation();
+
+            let favorites = getFavorites().filter(item => item !== name);
+
+            saveFavorites(favorites);
+
+            renderFavorites();
+
+            updateFavoriteButton();
+
+            showToast(
+                "Favorites",
+                `${name} removed.`,
+                "🗑️"
+            );
+
+        };
+
+        list.appendChild(item);
+
+    });
+
+}
+
+function updateFavoriteButton(){
+
+    const btn=document.getElementById("favoriteBtn");
+
+    if(!btn || !currentCountry) return;
+
+    const favorites=getFavorites();
+
+    const isFavorite =
+    favorites.includes(currentCountry.name);
+
+    btn.innerHTML = isFavorite ? "★" : "☆";
+
+    btn.classList.toggle(
+        "active",
+        isFavorite
+    );
+
+}
+
+function updateRecent(country){
+
+    let recent = getRecent();
+
+    recent = recent.filter(
+        item => item !== country.name
+    );
+
+    recent.unshift(country.name);
+
+    recent = recent.slice(0,5);
+
+    saveRecent(recent);
+
+    renderRecent();
+
+}
+
+function renderRecent(){
+
+    const list =
+    document.getElementById("recentList");
+
+    if(!list) return;
+
+    const recent = getRecent();
+
+    if(recent.length===0){
+
+        list.innerHTML=`
+            <div class="favorite-empty">
+                No recent country
+            </div>
+        `;
+
+        return;
+
+    }
+
+    list.innerHTML="";
+
+    recent.forEach(name=>{
+
+        const item=document.createElement("div");
+
+        item.className="favorite-item";
+
+        item.innerHTML=`🕒 ${name}`;
+
+        item.onclick=()=>{
+
+            const country =
+            countries.find(c=>c.name===name);
+
+            if(country){
+
+                showCountry(country);
+
+            }
+
+        };
+
+        list.appendChild(item);
+
+    });
+
+}
+
+
+document
+.getElementById("favoriteBtn")
+?.addEventListener("click",()=>{
+
+    if(!currentCountry) return;
+
+    let favorites=getFavorites();
+
+    if(favorites.includes(currentCountry.name)){
+
+        favorites=favorites.filter(
+
+            item=>item!==currentCountry.name
+
+        );
+
+        showToast(
+            "Favorites",
+            "Removed from favorites.",
+            "⭐"
+        );
+
+    }else{
+
+        favorites.push(currentCountry.name);
+
+        showToast(
+            "Favorites",
+            "Added to favorites.",
+            "⭐"
+        );
+
+    }
+
+    saveFavorites(favorites);
+
+    renderFavorites();
+
+    updateFavoriteButton();
+
+});
+
 // ======================================================
 // COUNTRY PANEL
 // ======================================================
@@ -1206,6 +1636,10 @@ function formatGDP(value){
 async function showCountry(country) {
 
     autoRotate = false;
+
+    currentCountry = country;
+
+    updateRecent(country);
 
     document.body.classList.add("loading");
 
@@ -1261,7 +1695,14 @@ async function showCountry(country) {
                 economy,
                 weather,
                 exchange,
-                news
+                news,
+
+                risk: calculateRisk(
+                    economy,
+                    weather,
+                    exchange,
+                    news
+                )
 
             };
 
@@ -1279,6 +1720,15 @@ async function showCountry(country) {
 
             title.innerText=country.name;
 
+            const currentCompare =
+            document.getElementById("currentCountryCompare");
+
+        if(currentCompare){
+
+            currentCompare.innerText = country.name;
+
+        }
+
             title.style.opacity="1";
 
         },150);
@@ -1295,7 +1745,6 @@ async function showCountry(country) {
         document.getElementById("region").innerText =
             apiCountry.region ?? "-";
 
-        console.log(economy.gdp);
         document.getElementById("gdp").innerText =
         formatGDP(economy.gdp);
 
@@ -1328,30 +1777,40 @@ async function showCountry(country) {
 
         }
 
-        // ==========================================
-        // UPDATE UI
-        // ==========================================
+// ==========================================
+// UPDATE UI
+// ==========================================
 
-        updateTradeProgress(country);
+updateTradeProgress(country);
 
-        updateRisk(country);
+updateWeather(weather);
 
-        updateWeather(weather);
+updateNews(news);
 
-        updateNews(news);
+updateAI(
+    country,
+    economy,
+    weather,
+    exchange
+);
 
-        updateAI(
-            country,
-            economy,
-            weather,
-            exchange
-        );
+updateChart(country, economy);
 
-        updateChart(country, economy);
+updateSupplyChainRisk(
+    country,
+    economy,
+    weather,
+    exchange,
+    news
+);
 
-        // ==========================================
-        // GLOBE
-        // ==========================================
+// ⭐ FAVORITE
+renderFavorites();
+updateFavoriteButton();
+
+// ==========================================
+// GLOBE
+// ==========================================
 
         globe.ringsData([country]);
 
@@ -1384,13 +1843,440 @@ async function showCountry(country) {
 
 }
 
+//==================================================
+// COMPARE COUNTRY
+//==================================================
+
+async function compareCountry(){
+
+    const select = document.getElementById("compareCountry");
+    const result = document.getElementById("compareResult");
+
+    if(!select || !result) return;
+
+    const compareName = select.value;
+
+    if(compareName===""){
+
+        showToast(
+            "Country Comparison",
+            "Please select a country first.",
+            "🌍"
+        );
+
+        return;
+
+    }
+
+    const currentName =
+        document.getElementById("countryTitle").textContent.trim();
+
+    if(currentName===compareName){
+
+        showToast(
+            "Country Comparison",
+            "Please choose another country.",
+            "⚠️"
+        );
+
+        return;
+
+    }
+
+    const current =
+        countries.find(c=>c.name===currentName);
+
+    const compare =
+        countries.find(c=>c.name===compareName);
+
+    if(!current || !compare){
+
+        result.innerHTML=`
+            <div class="compare-placeholder">
+                Country data not found.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    result.innerHTML=`
+        <div class="compare-placeholder">
+            Loading comparison...
+        </div>
+    `;
+
+    try{
+
+        const currentData = await loadCountryData(current);
+
+        const compareData = await loadCountryData(compare);
+
+        
+
+        renderComparison(
+            current,
+            compare,
+            currentData,
+            compareData
+        );
+
+    }
+
+    catch(e){
+
+        console.error(e);
+
+        result.innerHTML=`
+            <div class="compare-placeholder">
+                Failed to compare countries.
+            </div>
+        `;
+
+    }
+
+}
+
+async function loadCountryData(country){
+
+    if(countryCache[country.name]){
+
+        return countryCache[country.name];
+
+    }
+
+    const
+    [
+        countryInfo,
+        economy,
+        weather,
+        exchange,
+        news,
+    ] = await Promise.all([
+
+        getCountryInfo(country.name),
+
+        getEconomy(country.name),
+
+        getWeather(
+            country.lat,
+            country.lng
+        ),
+
+        getExchange(
+            country.currency
+        ),
+
+        getNews(
+            country.code
+        )
+
+    ]);
+
+    const data = {
+
+    countryInfo,
+
+    economy,
+
+    weather,
+
+    exchange,
+
+    news,
+
+    risk: calculateRisk(
+        economy,
+        weather,
+        exchange,
+        news
+    )
+
+};
+
+countryCache[country.name] = data;
+
+return data;
+
+}
+
+function compareValue(a,b){
+
+    if(Number(a)>Number(b)){
+        return ["winner",""];
+    }
+
+    if(Number(a)<Number(b)){
+        return ["","winner"];
+    }
+
+    return ["draw","draw"];
+
+}
+
+function renderComparison(
+
+    current,
+    compare,
+    currentData,
+    compareData
+
+){
+
+    const result=document.getElementById("compareResult");
+
+    if(!result) return;
+
+// =============================
+// COMPOSITE SCORE
+// =============================
+
+const currentGDP =
+    Number(String(currentData.economy.gdp).replace(/,/g, "")) || 0;
+
+const compareGDP =
+    Number(String(compareData.economy.gdp).replace(/,/g, "")) || 0;
+
+const maxGDP = Math.max(currentGDP, compareGDP, 1);
+
+// GDP (semakin besar semakin baik)
+const currentGDPScore =
+    (currentGDP / maxGDP) * 100;
+
+const compareGDPScore =
+    (compareGDP / maxGDP) * 100;
+
+
+// Inflation (semakin kecil semakin baik)
+const currentInflation =
+    Number(currentData.economy.inflation) || 100;
+
+const compareInflation =
+    Number(compareData.economy.inflation) || 100;
+
+const maxInflation =
+    Math.max(currentInflation, compareInflation, 1);
+
+const currentInflationScore =
+    100 - (currentInflation / maxInflation * 100);
+
+const compareInflationScore =
+    100 - (compareInflation / maxInflation * 100);
+
+
+// Risk (semakin kecil semakin baik)
+const currentRisk = currentData.risk;
+
+const compareRisk = compareData.risk;
+
+const currentRiskScore =
+    100 - currentRisk;
+
+const compareRiskScore =
+    100 - compareRisk;
+
+
+// FINAL SCORE
+
+const currentTrade =
+    parseFloat(String(current.tradeScore).replace("%", ""));
+
+const compareTrade =
+    parseFloat(String(compare.tradeScore).replace("%", ""));
+
+const currentFinal =
+    currentTrade * 0.40 +
+    currentGDPScore * 0.30 +
+    currentInflationScore * 0.15 +
+    currentRiskScore * 0.15;
+
+const compareFinal =
+    compareTrade * 0.40 +
+    compareGDPScore * 0.30 +
+    compareInflationScore * 0.15 +
+    compareRiskScore * 0.15;
+
+    const winner =
+    currentFinal > compareFinal
+        ? current.name
+        : compareFinal > currentFinal
+        ? compare.name
+        : "Draw";
+
+result.innerHTML = `
+
+<div class="tg-compare-card">
+
+    <div class="tg-compare-header">
+
+    <div class="country-card">
+
+        <img
+            src="https://flagcdn.com/w160/${current.code.toLowerCase()}.png"
+            class="compare-flag">
+
+        <h2>${current.name}</h2>
+
+    </div>
+
+    <div class="vs-circle">
+
+        VS
+
+    </div>
+
+    <div class="country-card">
+
+        <img
+            src="https://flagcdn.com/w160/${compare.code.toLowerCase()}.png"
+            class="compare-flag">
+
+        <h2>${compare.name}</h2>
+
+    </div>
+
+</div>
+
+    <div class="compare-grid">
+
+        <div class="compare-item">
+
+            <h4>Trade Score</h4>
+
+            <div class="compare-values">
+
+                <span>${current.tradeScore}</span>
+
+                <span>${compare.tradeScore}</span>
+
+            </div>
+
+        </div>
+
+        <div class="compare-item">
+
+            <h4>GDP</h4>
+
+            <div class="compare-values">
+
+                <span>${formatGDP(currentData.economy.gdp)}</span>
+
+                <span>${formatGDP(compareData.economy.gdp)}</span>
+
+            </div>
+
+        </div>
+
+        <div class="compare-item">
+
+            <h4>Inflation</h4>
+
+            <div class="compare-values">
+
+                <span>${currentData.economy.inflation}%</span>
+
+                <span>${compareData.economy.inflation}%</span>
+
+            </div>
+
+        </div>
+
+        <div class="compare-item">
+
+            <h4>Weather</h4>
+
+            <div class="compare-values">
+
+                <span>${currentData.weather.weather}</span>
+
+                <span>${compareData.weather.weather}</span>
+
+            </div>
+
+        </div>
+
+        <div class="compare-item">
+
+            <h4>Currency</h4>
+
+            <div class="compare-values">
+
+                <span>${current.currency}</span>
+
+                <span>${compare.currency}</span>
+
+            </div>
+
+        </div>
+
+        <div class="compare-item">
+
+            <h4>Exchange</h4>
+
+            <div class="compare-values">
+
+                <span>${currentData.exchange.rate}</span>
+
+                <span>${compareData.exchange.rate}</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="winner-box">
+
+    🏆 Winner
+
+    <h2>${winner}</h2>
+
+    <p style="margin-top:10px;font-size:15px;">
+        ${current.name} :
+        <b>${currentFinal.toFixed(2)}</b>
+        <br>
+
+        ${compare.name} :
+        <b>${compareFinal.toFixed(2)}</b>
+
+    </p>
+
+</div>
+
+    <div class="ai-summary">
+
+        <h3>🤖 AI Recommendation</h3>
+
+        <p>
+
+            ${
+                winner==="Draw"
+                ? "Both countries have similar trade potential."
+                :`${winner} is recommended because it achieved the highest Composite Score based on Trade Score, GDP, Inflation, and Supply Chain Risk.`
+            }
+
+        </p>
+
+    </div>
+
+</div>
+
+`;
+
+}
+
 // ======================================================
 // DEFAULT COUNTRY
 // ======================================================
 
 showCountry(countries[0]);
 
-console.log("Dashboard Logic Loaded");
+loadCompareCountries();
+
+renderFavorites();
+
+renderRecent();
 
 // ======================================================
 // TOOLTIP
@@ -1460,9 +2346,6 @@ dashboardGlobe.addEventListener("mousemove", e => {
 // ======================================================
 
 globe.onPointClick(country => {
-
-    console.log("CLICK BERHASIL");
-    console.log(country);
 
     showCountry(country);
 
@@ -1726,13 +2609,381 @@ document.getElementById("btnFullscreen")
 
 });
 
+document.getElementById("btnExport")
+?.addEventListener("click",()=>{
+
+    if(!currentCountry) return;
+
+    const pdf=new jsPDF();
+
+    pdf.setFontSize(20);
+
+    pdf.text(
+        "TradeGuardian Dashboard Report",
+        20,
+        20
+    );
+
+    pdf.setFontSize(12);
+
+    pdf.text(
+        `Country : ${currentCountry.name}`,
+        20,
+        40
+    );
+
+    pdf.text(
+        `Capital : ${document.getElementById("capital").innerText}`,
+        20,
+        50
+    );
+
+    pdf.text(
+        `Population : ${document.getElementById("population").innerText}`,
+        20,
+        60
+    );
+
+    pdf.text(
+        `GDP : ${document.getElementById("gdp").innerText}`,
+        20,
+        70
+    );
+
+    pdf.text(
+        `Inflation : ${document.getElementById("inflation").innerText}`,
+        20,
+        80
+    );
+
+    pdf.text(
+        `Exchange : ${document.getElementById("countryExchangeRate").innerText}`,
+        20,
+        90
+    );
+
+    pdf.text(
+        `Risk : ${document.getElementById("riskBadge").innerText}`,
+        20,
+        100
+    );
+
+    pdf.text(
+        `Trade Score : ${currentCountry.tradeScore}`,
+        20,
+        110
+    );
+
+    pdf.save(
+        `${currentCountry.name}-TradeGuardian.pdf`
+    );
+
+    showToast(
+        "Export",
+        "PDF report generated.",
+        "📄"
+    );
+
+});
+
+// ======================================================
+// LOGO CLICK = SHOW TOUR
+// ======================================================
+
+document.querySelector(".tg-logo")
+?.addEventListener("click",()=>{
+
+    localStorage.removeItem("tg-tour-complete");
+
+    location.reload();
+
+});
+
+// SETTINGS
+
+const modal=document.getElementById("settingsModal");
+
+document.querySelector(".tg-setting-btn")
+?.addEventListener("click",()=>{
+
+    modal.classList.add("show");
+
+});
+
+document.getElementById("closeSettings")
+?.addEventListener("click",()=>{
+
+    modal.classList.remove("show");
+
+});
+
+modal?.addEventListener("click",(e)=>{
+
+    if(e.target===modal){
+
+        modal.classList.remove("show");
+
+    }
+
+});
+
+// REPLAY TOUR
+
+document.getElementById("replayTour")
+?.addEventListener("click",()=>{
+
+    localStorage.removeItem("tg-tour-complete");
+
+    location.reload();
+
+});
+
+// THEME
+
+const themeBtn=document.getElementById("toggleTheme");
+
+themeBtn?.addEventListener("click",()=>{
+
+    document.body.classList.toggle("light-theme");
+
+    localStorage.setItem(
+        "tg-theme",
+        document.body.classList.contains("light-theme")
+            ? "light"
+            : "dark"
+    );
+
+    showToast(
+        "Theme Changed",
+        document.body.classList.contains("light-theme")
+            ? "Light mode enabled."
+            : "Dark mode enabled.",
+        "🌙"
+    );
+
+    modal.classList.remove("show");
+
+});
+
+if(localStorage.getItem("tg-theme")==="light"){
+
+    document.body.classList.add("light-theme");
+
+}
+
+// GLOBE SETTINGS
+
+let rotationEnabled = true;
+
+document.getElementById("toggleRotation")
+?.addEventListener("click",()=>{
+
+    rotationEnabled=!rotationEnabled;
+
+    autoRotate=rotationEnabled;
+
+    showToast(
+        "Globe Rotation",
+        rotationEnabled
+            ? "Rotation enabled."
+            : "Rotation disabled.",
+        "🌍"
+    );
+
+    modal.classList.remove("show");
+
+});
+
+document.getElementById("resetCamera")
+?.addEventListener("click",()=>{
+
+    if(window.resetGlobe){
+
+        window.resetGlobe();
+
+    }
+
+    showToast(
+        "Camera Reset",
+        "Globe camera restored.",
+        "🎯"
+    );
+
+    modal.classList.remove("show");
+
+});
+
+// ======================================
+// TOAST
+// ======================================
+
+const toast=document.getElementById("tgToast");
+
+const toastTitle=document.getElementById("tgToastTitle");
+
+const toastText=document.getElementById("tgToastText");
+
+function showToast(title,message,icon="✅"){
+
+    if(!toast) return;
+
+    toast.querySelector(".tg-toast-icon").innerHTML=icon;
+
+    toastTitle.innerHTML=title;
+
+    toastText.innerHTML=message;
+
+    toast.classList.add("show");
+
+    clearTimeout(window.toastTimer);
+
+    window.toastTimer=setTimeout(()=>{
+
+        toast.classList.remove("show");
+
+    },2500);
+
+}
+
+
 // ======================================================
 // GLOBAL EXPORT
 // ======================================================
 
 window.showCountry = showCountry;
 
-window.resetGlobe = resetCamera;
+// ======================================================
+// ACTIVE SIDEBAR
+// ======================================================
+
+const sections = document.querySelectorAll("[id$='Section']");
+
+sections.forEach(section=>{
+
+    section.classList.add("tg-reveal");
+
+});
+
+const navLinks = document.querySelectorAll(".tg-sidebar-menu a");
+
+const observer = new IntersectionObserver(
+
+(entries)=>{
+
+    entries.forEach(entry=>{
+
+        if(!entry.isIntersecting) return;
+
+        sections.forEach(section=>{
+
+            section.classList.remove("tg-active-section");
+
+        });
+
+        entry.target.classList.add("tg-active-section");
+
+        navLinks.forEach(link=>{
+
+            link.classList.remove("active");
+
+        });
+
+        const id = "#" + entry.target.id;
+
+        const active = document.querySelector(
+            `.tg-sidebar-menu a[href="${id}"]`
+        );
+
+        if(active){
+
+            active.classList.add("active");
+
+        }
+
+        entry.target.classList.add("show");
+
+    });
+
+},
+
+{
+
+    threshold:.45
+
+}
+
+);
+
+sections.forEach(section=>observer.observe(section));
+
+// ======================================================
+// DASHBOARD TOUR
+// ======================================================
+
+const tour=document.getElementById("tgTour");
+
+if(localStorage.getItem("tg-tour-complete")){
+
+    tour.classList.add("hidden");
+
+}
+
+if(tour){
+
+const steps=[
+
+"🌍 Click the interactive globe to choose a country.",
+
+"📈 Monitor live economy and trade statistics.",
+
+"☀️ Check weather and exchange rate instantly.",
+
+"🤖 Read AI recommendations before making trade decisions.",
+
+"📰 Stay updated with the latest trade news."
+
+];
+
+let current=0;
+
+const text=document.getElementById("tourText");
+
+const next=document.getElementById("tourNext");
+
+const skip=document.getElementById("tourSkip");
+
+text.innerText=steps[current];
+
+next.onclick=()=>{
+
+    current++;
+
+    if(current>=steps.length){
+
+        localStorage.setItem("tg-tour-complete","true");
+
+        tour.classList.add("hidden");
+
+        return;
+
+    }
+
+    text.innerText=steps[current];
+
+};
+
+skip.onclick=()=>{
+
+    localStorage.setItem("tg-tour-complete","true");
+
+    tour.classList.add("hidden");
+
+};
+
+}
+
+document.getElementById("btnCompare")
+?.addEventListener("click", compareCountry);
 
 // ======================================================
 // READY

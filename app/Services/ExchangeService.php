@@ -9,27 +9,27 @@ class ExchangeService
     public function getExchange(string $currency): array
     {
         $response = Http::get(
-            "https://open.er-api.com/v6/latest/{$currency}"
+            "https://open.er-api.com/v6/latest/USD"
         );
 
-        if (!$response->successful()) {
-            throw new \Exception("Exchange API failed");
+        if(!$response->successful()){
+            throw new \Exception("Exchange API Failed");
         }
 
         $json = $response->json();
 
-        if (!isset($json['rates']['IDR'])) {
-            throw new \Exception("Exchange rate not found");
+        if(!isset($json["rates"][$currency])){
+            throw new \Exception("Currency not found");
         }
 
         return [
 
-            'base' => $currency,
+            "base" => "USD",
 
-            'target' => 'IDR',
+            "target" => $currency,
 
-            'rate' => number_format(
-                $json['rates']['IDR'],
+            "rate" => round(
+                $json["rates"][$currency],
                 2
             )
 

@@ -12,7 +12,7 @@
 
     <aside class="tg-sidebar">
 
-        <div class="tg-logo">
+        <div class="tg-logo" title="Click to replay dashboard tour">
 
             <div class="tg-logo-icon">
                 🌍
@@ -30,91 +30,121 @@
 
         <nav class="tg-sidebar-menu">
 
-            <a href="#" class="active">
+            <a href="#dashboardSection" class="active">
 
-                <i class="bi bi-grid-fill"></i>
+            <i class="bi bi-grid-fill"></i>
 
-                <span>Dashboard</span>
+            <span>Dashboard</span>
 
-            </a>
+        </a>
 
-            <a href="#">
+            <a href="#countrySection">
 
-                <i class="bi bi-globe2"></i>
+            <i class="bi bi-globe2"></i>
 
-                <span>Countries</span>
+            <span>Countries</span>
 
-            </a>
+        </a>
 
-            <a href="#">
+            <a href="#economySection">
 
-                <i class="bi bi-bar-chart-fill"></i>
+            <i class="bi bi-bar-chart-fill"></i>
 
-                <span>Economy</span>
+            <span>Economy</span>
 
-            </a>
+        </a>
 
-            <a href="#">
+            <a href="#exchangeSection">
 
-                <i class="bi bi-currency-exchange"></i>
+            <i class="bi bi-currency-exchange"></i>
 
-                <span>Exchange Rate</span>
+            <span>Exchange Rate</span>
 
-            </a>
+        </a>
 
-            <a href="#">
+            <a href="#weatherSection">
 
-                <i class="bi bi-cloud-sun-fill"></i>
+            <i class="bi bi-cloud-sun-fill"></i>
 
-                <span>Weather</span>
+            <span>Weather</span>
 
-            </a>
+        </a>
 
-            <a href="#">
+            <a href="#newsSection">
 
-                <i class="bi bi-newspaper"></i>
+            <i class="bi bi-newspaper"></i>
 
-                <span>Trade News</span>
+            <span>Trade News</span>
 
-            </a>
+        </a>
 
-            <a href="#">
+            <a href="#aiSection">
 
-                <i class="bi bi-robot"></i>
+            <i class="bi bi-robot"></i>
 
-                <span>AI Recommendation</span>
+            <span>AI Recommendation</span>
 
-            </a>
+        </a>
 
         </nav>
 
+        <div class="tg-favorite-sidebar">
+
+    <h4>
+        ⭐ Favorite Countries
+        <span id="favoriteCount">0</span>
+    </h4>
+
+    <div id="favoriteList">
+
+        <div class="favorite-empty">
+            No favorites yet
+        </div>
+
+    </div>
+
+    <div class="tg-recent-sidebar">
+
+    <h4>
+        🕒 Recent Viewed
+    </h4>
+
+    <div id="recentList">
+
+        <div class="favorite-empty">
+            No recent country
+        </div>
+
+    </div>
+
+</div>
+
         <div class="tg-sidebar-footer">
 
-            <button class="tg-setting-btn">
+    <button class="tg-setting-btn">
 
-                <i class="bi bi-gear-fill"></i>
+        <i class="bi bi-gear-fill"></i>
 
-                Settings
+        Settings
 
-            </button>
+    </button>
 
-            <form action="{{ route('logout') }}" method="POST">
+    <form action="{{ route('logout') }}" method="POST">
+        @csrf
 
-                @csrf
+        <button
+            class="tg-logout-btn"
+            type="submit">
 
-                <button
-                    class="tg-logout-btn"
-                    type="submit">
+            <i class="bi bi-box-arrow-right"></i>
 
-                    <i class="bi bi-box-arrow-right"></i>
+            Logout
 
-                    Logout
+        </button>
 
-                </button>
+    </form>
 
-            </form>
-
-        </div>
+</div>
 
     </aside>
 
@@ -140,13 +170,9 @@
 
                 <p>
 
-                    Monitor world economy,
-                    shipping activity,
-                    weather,
-                    exchange rate,
-                    trade routes,
-                    and AI recommendation
-                    in one dashboard.
+                    Monitor global trade performance, economic indicators,
+                    weather conditions, exchange rates,
+                    and AI-driven recommendations in one dashboard.
 
                 </p>
 
@@ -364,7 +390,9 @@
 
             <div class="tg-left-column">
 
-                <section class="tg-globe-card">
+                <section
+                    id="dashboardSection"
+                    class="tg-globe-card">
 
                     <div class="tg-card-header">
 
@@ -419,7 +447,9 @@
 
                 </section>
 
-                <div class="tg-chart-card">
+                <div
+                    id="economySection"
+                    class="tg-chart-card">
 
                     <div class="tg-card-header">
 
@@ -442,171 +472,93 @@
                     </div>
 
                 </div>
-<!-- ================================================= -->
-<!-- BOTTOM GRID -->
-<!-- ================================================= -->
-
-        <section class="tg-bottom-grid">
-
 
 <!-- ================================================= -->
-<!-- TRADE STATISTICS -->
+<!-- COUNTRY COMPARISON -->
 <!-- ================================================= -->
 
-<div class="tg-stat-card">
+<section class="tg-compare-card">
 
     <div class="tg-card-header">
 
-        <h3>
+        <div class="tg-title-group">
 
-            📊 Trade Statistics
+            <h3>🌍 Country Comparison</h3>
 
-        </h3>
-
-    </div>
-
-    <div class="tg-stat-grid">
-
-        <div class="tg-stat-box">
-
-            <span>
-
-                Export
-
+            <span class="tg-chart-live">
+                LIVE ANALYSIS
             </span>
-
-            <strong>
-
-                $248B
-
-            </strong>
-
-        </div>
-
-        <div class="tg-stat-box">
-
-            <span>
-
-                Import
-
-            </span>
-
-            <strong>
-
-                $214B
-
-            </strong>
-
-        </div>
-
-        <div class="tg-stat-box">
-
-            <span>
-
-                Trade Balance
-
-            </span>
-
-            <strong>
-
-                +$34B
-
-            </strong>
-
-        </div>
-
-        <div class="tg-stat-box">
-
-            <span>
-
-                Shipping
-
-            </span>
-
-            <strong>
-
-                Stable
-
-            </strong>
 
         </div>
 
     </div>
 
-</div>
+    <div class="tg-compare-content">
 
-<!-- ================================================= -->
-<!-- TOP PARTNER -->
-<!-- ================================================= -->
+        <div class="tg-current-country">
 
-<div class="tg-partner-card">
+            <span>Current Country</span>
 
-    <div class="tg-card-header">
-
-        <h3>
-
-            🌎 Top Trade Partners
-
-        </h3>
-
-    </div>
-
-    <div class="tg-partner-list">
-
-        <div class="tg-partner-item">
-
-            <span>🇯🇵 Japan</span>
-
-            <strong>95%</strong>
+            <h2 id="currentCountryCompare">
+                Indonesia
+            </h2>
 
         </div>
 
-        <div class="tg-partner-item">
+        <div class="tg-vs">
+            VS
+        </div>
 
-            <span>🇨🇳 China</span>
+        <div class="tg-select-country">
 
-            <strong>92%</strong>
+            <span>Compare With</span>
+
+            <select id="compareCountry">
+
+                <option value="">
+                    Select Country...
+                </option>
+
+            </select>
 
         </div>
 
-        <div class="tg-partner-item">
+        <button
+            id="btnCompare"
+            class="tg-compare-btn">
 
-            <span>🇺🇸 United States</span>
+            <i class="bi bi-bar-chart-fill"></i>
 
-            <strong>97%</strong>
+            Compare Now
 
-        </div>
+        </button>
 
-        <div class="tg-partner-item">
+        <!-- HASIL PERBANDINGAN -->
+        <div id="compareResult" class="tg-compare-result">
 
-            <span>🇩🇪 Germany</span>
+            <div class="compare-placeholder">
 
-            <strong>93%</strong>
+                Select a country and click
+                <strong>Compare Now</strong>
 
-        </div>
-
-        <div class="tg-partner-item">
-
-            <span>🇦🇺 Australia</span>
-
-            <strong>90%</strong>
+            </div>
 
         </div>
 
     </div>
-
-</div>
 
 </section>
+
+<!-- ================================================= -->
+<!-- QUICK ACTION -->
+<!-- ================================================= -->
 
 <section class="tg-quick-card">
 
     <div class="tg-card-header">
 
         <h3>
-
             ⚡ Quick Actions
-
         </h3>
 
     </div>
@@ -620,9 +572,7 @@
             <i class="bi bi-arrow-repeat"></i>
 
             <span>
-
                 Refresh Data
-
             </span>
 
         </button>
@@ -634,218 +584,236 @@
             <i class="bi bi-arrows-fullscreen"></i>
 
             <span>
-
                 Fullscreen
-
             </span>
 
         </button>
+
+        <button
+            id="btnExport"
+            class="tg-action-btn">
+
+            <i class="bi bi-file-earmark-pdf-fill"></i>
+
+            <span>
+                Export Report
+            </span>
+
+</button>
 
     </div>
 
 </section>
 
-            </div>
+</div>
 
-            <!-- ================================================= -->
-            <!-- RIGHT COLUMN -->
-            <!-- ================================================= -->
+
+
+<!-- ================================================= -->
+<!-- RIGHT COLUMN -->
+<!-- ================================================= -->
 
             <aside class="tg-right-column">
 
-                <!-- ============================================== -->
-                <!-- COUNTRY INFORMATION -->
-                <!-- ============================================== -->
+<!-- ============================================== -->
+<!-- COUNTRY INFORMATION -->
+<!-- ============================================== -->
 
-                <section class="tg-country-card">
+<section
+    id="countrySection"
+    class="tg-country-card">
 
-                <div class="tg-card-header">
+    <div class="tg-card-header">
+        <h3>🌎 Country Information</h3>
+    </div>
 
-                    <h3>🌎 Country Information</h3>
+    <div class="tg-country-header">
 
-                </div>
+        <img
+            id="countryFlag"
+            src=""
+            alt="Country Flag"
+            hidden>
 
-                <div class="tg-country-header">
+        <div>
 
-                    <img 
-                        id="countryFlag"
-                        src=""
-                        alt="Country Flag"
-                        hidden>
+            <div class="tg-country-title">
 
-                    <div>
+    <div class="tg-country-top">
 
-                        <div class="tg-country-title">
+        <h2 id="countryTitle">
 
-                            <h2 id="countryTitle">
-                                Select Country
-                            </h2>
+            Select Country
 
-                            <span class="tg-country-chip">
+        </h2>
 
-                                Trade Profile
+        <button
+            id="favoriteBtn"
+            class="favorite-btn">
 
-                            </span>
+            ☆
 
-                        </div>
+        </button>
 
-                        <span id="region">-</span>
+    </div>
 
-                    </div>
+    <span class="tg-country-chip">
 
-                </div>
+        Trade Profile
 
-                    <div class="tg-country-grid">
+    </span>
 
-                        <div class="tg-info-box">
+</div>
 
-                            <span>
+            <span id="region">-</span>
 
-                                Capital
+        </div>
 
-                            </span>
+    </div>
 
-                            <strong id="capital">
+    <div class="tg-country-grid">
 
-                                -
+        <div class="tg-info-box">
+            <span>Capital</span>
+            <strong id="capital">-</strong>
+        </div>
 
-                            </strong>
+        <div class="tg-info-box">
+            <span>Population</span>
+            <strong id="population">-</strong>
+        </div>
 
-                        </div>
+        <div class="tg-info-box">
+            <span>Currency</span>
+            <strong id="currency">-</strong>
+        </div>
 
-                        <div class="tg-info-box">
+        <div class="tg-info-box">
+            <span>GDP</span>
+            <strong id="gdp">-</strong>
+        </div>
 
-                            <span>
+        <div class="tg-info-box">
+            <span>Inflation</span>
+            <strong id="inflation">-</strong>
+        </div>
 
-                                Population
+        <div
+            id="exchangeSection"
+            class="tg-info-box">
 
-                            </span>
+            <span>Exchange</span>
 
-                            <strong id="population">
+            <strong id="countryExchangeRate">
+                --
+            </strong>
 
-                                -
+        </div>
 
-                            </strong>
+    </div>
 
-                        </div>
+    <!-- ===================== -->
+    <!-- TRADE SCORE -->
+    <!-- ===================== -->
 
-                        <div class="tg-info-box">
+    <div class="tg-progress-section">
 
-                            <span>
+        <div class="tg-progress-title">
 
-                                Currency
+            <span>Trade Score</span>
 
-                            </span>
+        </div>
 
-                            <strong id="currency">
+        <div class="tg-progress">
 
-                                -
+            <div
+                id="tradeProgress"
+                class="tg-progress-bar">
 
-                            </strong>
+                0%
 
-                        </div>
+            </div>
 
-                        <div class="tg-info-box">
+        </div>
 
-                            <span>
+    </div>
 
-                                GDP
+    <!-- ===================== -->
+    <!-- SUPPLY CHAIN RISK -->
+    <!-- ===================== -->
 
-                            </span>
+    <section class="tg-risk-card">
 
-                            <strong id="gdp">
+        <div class="tg-card-header">
+            <h3>🛡 Supply Chain Risk Engine</h3>
+        </div>
 
-                                -
+        <div class="tg-risk-circle">
 
-                            </strong>
+            <h1 id="riskScore">0</h1>
 
-                        </div>
+            <span>/100</span>
 
-                        <div class="tg-info-box">
+        </div>
 
-                            <span>
+        <div
+            id="riskBadge"
+            class="risk-badge">
 
-                                Inflation
+            LOW RISK
 
-                            </span>
+        </div>
 
-                            <strong id="inflation">
+        <div class="tg-risk-breakdown">
 
-                                -
+            <div>
+                Weather
+                <strong id="weatherRisk">0</strong>
+            </div>
 
-                            </strong>
+            <div>
+                Inflation
+                <strong id="inflationRisk">0</strong>
+            </div>
 
-                        </div>
+            <div>
+                News
+                <strong id="newsRisk">0</strong>
+            </div>
 
-                        <div class="tg-info-box">
+        </div>
 
-                            <span>
+    </section>
 
-                                Exchange
+    <!-- ===================== -->
+    <!-- WEATHER -->
+    <!-- ===================== -->
 
-                            </span>
+    <div
+        id="weatherSection"
+        class="tg-weather-section">
 
-                            <strong id="countryExchangeRate">
+        <h4>Weather</h4>
 
-                                --
+        <div
+            id="weatherCard"
+            class="tg-weather-card">
 
-                            </strong>
+            Select Country
 
-                        </div>
+        </div>
 
-                    </div>
+    </div>
 
-                    <div class="tg-progress-section">
-
-                        <div class="tg-progress-title">
-
-                            <span>
-
-                                Trade Score
-
-                            </span>
-
-                        </div>
-
-                        <div class="tg-progress">
-
-                            <div
-                                id="tradeProgress"
-                                class="tg-progress-bar">
-
-                                0%
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <div class="tg-weather-section">
-
-                        <h4>
-
-                            Weather
-
-                        </h4>
-
-                        <div
-                            id="weatherCard"
-                            class="tg-weather-card">
-
-                            Select Country
-
-                        </div>
-
-                    </div>
-
-                </section>
+</section>
 
 <!-- ============================================== -->
 <!-- AI -->
 <!-- ============================================== -->
 
-<section class="tg-ai-card">
+<section
+    id="aiSection"
+    class="tg-ai-card">
 
     <div class="tg-card-header">
 
@@ -873,11 +841,14 @@
 
 </section>
 
+
 <!-- ============================================== -->
 <!-- NEWS -->
 <!-- ============================================== -->
 
-<section class="tg-news-card">
+<section
+    id="newsSection"
+    class="tg-news-card">
 
     <div class="tg-card-header">
 
@@ -916,9 +887,95 @@
 
 </div>
 
+<div id="tgTour" class="tg-tour">
+
+    <div class="tg-tour-box">
+
+        <h2>👋 Welcome to TradeGuardian</h2>
+
+        <p id="tourText">
+            Explore global trade information interactively.
+        </p>
+
+        <div class="tg-tour-buttons">
+
+            <button id="tourSkip">
+                Skip
+            </button>
+
+            <button id="tourNext">
+                Next →
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
 <div
     id="countryTooltip"
     class="tg-tooltip">
+
+</div>
+
+<!-- SETTINGS MODAL -->
+
+<div id="settingsModal" class="tg-modal">
+
+    <div class="tg-modal-content">
+
+        <div class="tg-modal-header">
+
+            <h2>⚙️ Dashboard Settings</h2>
+
+            <button id="closeSettings">&times;</button>
+
+        </div>
+
+        <div class="tg-setting-list">
+
+            <button id="toggleTheme" class="tg-setting-item">
+                🌙 Toggle Theme
+            </button>
+
+            <button id="toggleRotation" class="tg-setting-item">
+                🌍 Toggle Globe Rotation
+            </button>
+
+            <button id="resetCamera" class="tg-setting-item">
+                🎯 Reset Globe Camera
+            </button>
+
+            <button id="replayTour" class="tg-setting-item">
+                👋 Replay Dashboard Tour
+            </button>
+
+            <button class="tg-setting-item" disabled>
+                ℹ️ TradeGuardian v2.0
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="tgToast" class="tg-toast">
+
+    <div class="tg-toast-icon">✅</div>
+
+    <div>
+
+        <div id="tgToastTitle" class="tg-toast-title">
+            Success
+        </div>
+
+        <div id="tgToastText" class="tg-toast-text">
+            Action completed.
+        </div>
+
+    </div>
 
 </div>
 

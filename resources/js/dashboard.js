@@ -3,6 +3,7 @@ import "./bootstrap";
 import Chart from "chart.js/auto";
 import Globe from "globe.gl";
 import * as THREE from "three";
+import { renderEconomyChart } from "./components/chart";
 
 import { countries } from "./countryData";
 
@@ -133,66 +134,22 @@ const tradeRoutes = [
    CREATE GLOBE
 ===================================================== */
 
+const globe = Globe()(dashboardGlobe);
 
-const globe = Globe()(dashboardGlobe)
+window.globe = globe;
 
-
-
+globe
 .width(
     dashboardGlobe.clientWidth
 )
-
-
-
 .height(600)
-
-
-
-.backgroundColor(
-    "rgba(0,0,0,0)"
-)
-
-
-
-.globeImageUrl(
-
-"https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-
-)
-
-
-
-.bumpImageUrl(
-
-"https://unpkg.com/three-globe/example/img/earth-topology.png"
-
-)
-
-
-
-.backgroundImageUrl(
-
-"https://unpkg.com/three-globe/example/img/night-sky.png"
-
-)
-
-
-
+.backgroundColor("rgba(0,0,0,0)")
+.globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
+.bumpImageUrl("https://unpkg.com/three-globe/example/img/earth-topology.png")
+.backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
 .showAtmosphere(true)
-
-
-
-.atmosphereColor(
-    "#38bdf8"
-)
-
-
-
-.atmosphereAltitude(
-    0.22
-);
-
-
+.atmosphereColor("#38bdf8")
+.atmosphereAltitude(0.22);
 
 
 /* =====================================================
@@ -948,11 +905,6 @@ setInterval(()=>{
 
 
 },450);
-
-
-
-
-
 
 
 /* =====================================================
